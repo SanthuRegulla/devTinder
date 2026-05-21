@@ -11,10 +11,8 @@ app.use(express.json());
 //signup route
 app.post("/signup", async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
-
     // Create a new user
-    const user = new User({ firstName, lastName, email, password });
+    const user = new User(req.body);
     await user.save();
 
     res.status(201).json({ message: "User created successfully" });
@@ -68,7 +66,13 @@ app.patch("/user/:id", async (req, res) => {
   const userId = req.params.id;
   const data = req.body;
   try {
-    const user = await User.findByIdAndUpdate(userId, data);
+    const allowedUpdates = ["firstName", "lastName", "age", "gender", "skills"];
+    if (!Object.keys(data).every((key) => allowedUpdates.includes(key))) {
+      return res.status(400).json({ message: "Invalid updates" });
+    }
+    const user = await User.findByIdAndUpdate(userId, data, {
+      runValidators: true,
+    });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
