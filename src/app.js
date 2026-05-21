@@ -1,23 +1,26 @@
 const express = require("express");
-const { authAdmin, authUser } = require("./middlewares/auth");
 
 const app = express();
+const connectDB = require("./config/database");
+const User = require("./models/user");
 
-app.use("/admin", authAdmin);
+// Connect to MongoDB
+connectDB();
+app.use(express.json());
 
-app.get("/user/login", (req, res) => {
-  res.send("User login logged in successfully");
-});
+app.post("/signup", async (req, res) => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
 
-app.get("/user/data", authUser, (req, res) => {
-  res.send("User data endpoint");
-});
+    // Create a new user
+    const user = new User({ firstName, lastName, email, password });
+    await user.save();
 
-app.get("/admin/getUserData", (req, res) => {
-  res.send("Get User data for admin");
-});
-app.get("/admin/deleteUser", (req, res) => {
-  res.send("Delete user endpoint for admin");
+    res.status(201).json({ message: "User created successfully" });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 });
 
 app.listen(3000, () => {
