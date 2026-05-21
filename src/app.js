@@ -66,9 +66,18 @@ app.patch("/user/:id", async (req, res) => {
   const userId = req.params.id;
   const data = req.body;
   try {
-    const allowedUpdates = ["firstName", "lastName", "age", "gender", "skills"];
+    const allowedUpdates = [
+      "_id",
+      "firstName",
+      "lastName",
+      "age",
+      "gender",
+      "skills",
+    ];
     if (!Object.keys(data).every((key) => allowedUpdates.includes(key))) {
-      return res.status(400).json({ message: "Invalid updates" });
+      return res.status(400).json({
+        message: "Invalid updates",
+      });
     }
     const user = await User.findByIdAndUpdate(userId, data, {
       runValidators: true,
