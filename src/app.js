@@ -7,6 +7,7 @@ const { validateSignupData } = require("./utils.js/validation");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const { authUser } = require("./middlewares/auth");
 
 // Connect to MongoDB
 connectDB();
@@ -66,22 +67,13 @@ app.post("/login", async (req, res) => {
 });
 
 //profile route
-app.get("/profile", async (req, res) => {
+app.get("/profile", authUser, async (req, res) => {
   try {
-    // Add your JWT token verification logic here to authenticate the user
-    const token = req.cookies.token;
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized" });
-    } else {
-      const decodedMessage = jwt.verify(token, "Sant@123");
-      const { userId } = decodedMessage;
-      const user = await User.findById(userId);
-
-      res.status(200).json(user);
-    }
+    const user = req.user;
+    res.status(200).json(user);
   } catch (error) {
     console.error("Error fetching profile:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(400).json({ message: error.message });
   }
 });
 
