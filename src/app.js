@@ -46,14 +46,12 @@ app.post("/login", async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "Invalid credentials" });
     } else {
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+      const isPasswordValid = await user.validatePassword(password);
       if (!isPasswordValid) {
         return res.status(401).json({ message: "Invalid credentials" });
       } else {
         //create a jwt token and send it in cookie
-        const token = jwt.sign({ userId: user._id }, "Sant@123", {
-          expiresIn: "1h",
-        });
+        const token = await user.getJwtToken();
         //Add your JWT token generation logic here and set the cookie
         res.cookie("token", token);
 
@@ -73,6 +71,19 @@ app.get("/profile", authUser, async (req, res) => {
     res.status(200).json(user);
   } catch (error) {
     console.error("Error fetching profile:", error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+app.post("/sendConnectionRequest", authUser, async (req, res) => {
+  try {
+    const user = req.user;
+    const name = user.firstName + " " + user.lastName;
+    res
+      .status(200)
+      .json({ message: name + " Connection request sent successfully" });
+  } catch (error) {
+    console.error("Error sending connection request:", error);
     res.status(400).json({ message: error.message });
   }
 });
