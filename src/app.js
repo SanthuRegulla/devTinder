@@ -5,11 +5,13 @@ const connectDB = require("./config/database");
 const User = require("./models/user");
 const { validateSignupData } = require("./utils.js/validation");
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
 // Connect to MongoDB
 connectDB();
 app.use(express.json());
-
+app.use(cookieParser());
 //signup route
 app.post("/signup", async (req, res) => {
   try {
@@ -47,11 +49,38 @@ app.post("/login", async (req, res) => {
       if (!isPasswordValid) {
         return res.status(401).json({ message: "Invalid credentials" });
       } else {
+        //create a jwt token and send it in cookie
+        const token = jwt.sign({ userId: user._id }, "Sant@123", {
+          expiresIn: "1h",
+        });
+        //Add your JWT token generation logic here and set the cookie
+        res.cookie("token", token);
+
         res.status(200).json({ message: "Login successful" });
       }
     }
   } catch (error) {
     console.error("Error logging in:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+//profile route
+app.get("/profile", async (req, res) => {
+  try {
+    // Add your JWT token verification logic here to authenticate the user
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized" });
+    } else {
+      const decodedMessage = jwt.verify(token, "Sant@123");
+      const { userId } = decodedMessage;
+      const user = await User.findById(userId);
+
+      res.status(200).json(user);
+    }
+  } catch (error) {
+    console.error("Error fetching profile:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
